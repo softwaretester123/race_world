@@ -33,7 +33,7 @@ const cars_list = [
 			seats: 7,
 			bootspace: 209,
 		},
-		price: 1069000,
+		price: 1049000,
 	},
 	{
 		id: 3,

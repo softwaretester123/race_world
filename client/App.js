@@ -1,61 +1,42 @@
-import { StatusBar } from 'expo-status-bar';
 import React from 'react';
-import { StyleSheet, Text, View, Button } from 'react-native';
+import { View, Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { FontAwesome } from '@expo/vector-icons';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useNavigation } from '@react-navigation/core';
+import Navigation from './Navigation';
 
-import BuyCar from './Screens/BuyCar';
-import SellCar from './Screens/SellCar';
+import { ApolloProvider } from '@apollo/client';
+import { client } from './apollo';
 
-const Tab = createBottomTabNavigator();
+import SignInScreen from './Screens/SignInScreen';
+import SignUpScreen from './Screens/SignUpScreen';
 
-export default function App() {
+const Stack = createNativeStackNavigator();
+
+const App = () => {
 	return (
-		<NavigationContainer>
-			<Tab.Navigator
-				// screenOptions={{
-				// 	headerShown: false,
-				// }}
-				screenOptions={({ route }) => ({
-					tabBarIcon: ({ focused }) => {
-						let iconName;
-						let color;
-						if (route.name === 'BuyCar') {
-							iconName = 'car';
-							color = focused ? 'black' : 'grey';
-						} else if (route.name === 'SellCar') {
-							iconName = 'dollar';
-							color = focused ? 'black' : 'grey';
-						}
-
-						return <FontAwesome name={iconName} size={24} color={color} />;
-					},
-					headerShown: false,
-					tabBarActiveTintColor: 'black',
-					tabBarInactiveTintColor: 'gray',
-				})}
-			>
-				<Tab.Screen
-					name='BuyCar'
-					component={BuyCar}
-					options={{ title: 'Buy Car' }}
-				/>
-				<Tab.Screen
-					name='SellCar'
-					component={SellCar}
-					options={{ title: 'Sell Car' }}
-				/>
-			</Tab.Navigator>
-		</NavigationContainer>
+		<ApolloProvider client={client}>
+			<NavigationContainer>
+				<Stack.Navigator>
+					<Stack.Screen
+						name='Login'
+						component={SignInScreen}
+						options={{ title: 'Login' }}
+					/>
+					<Stack.Screen
+						name='Register'
+						component={SignUpScreen}
+						options={{ title: 'Register' }}
+					/>
+					<Stack.Screen
+						name='Home'
+						component={Navigation}
+						options={{headerShown: false}}
+					/>
+				</Stack.Navigator>
+			</NavigationContainer>
+		</ApolloProvider>
 	);
-}
+};
 
-const styles = StyleSheet.create({
-	container: {
-		flex: 1,
-		backgroundColor: '#fff',
-		alignItems: 'center',
-		justifyContent: 'center',
-	},
-});
+export default App;
