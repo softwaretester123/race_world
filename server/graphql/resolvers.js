@@ -13,7 +13,18 @@ const userSchema = Joi.object({
 	email: Joi.string()
 		.email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } })
 		.required(),
-	password: Joi.string().alphanum().min(3).required(),
+	password: Joi.string().min(3).required(),
+	address: Joi.string().required().min(15),
+	contact: Joi.string().required().min(10).max(10),
+});
+
+const userUpdateSchema = Joi.object({
+	name: Joi.string().min(3).required(),
+	email: Joi.string()
+		.email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } })
+		.required(),
+	contact: Joi.string().required().min(10).max(10),
+	address: Joi.string().required().min(15),
 });
 
 const getToken = (user) =>
@@ -26,12 +37,14 @@ const resolvers = {
 		},
 	},
 	Mutation: {
-		signUp: async (_, { name, email, password }) => {
+		signUp: async (_, { name, email, password, address, contact }) => {
 			try {
 				const { value, error } = await userSchema.validate({
 					name,
 					email,
 					password,
+					address,
+					contact,
 				});
 
 				if (error) {
@@ -53,17 +66,19 @@ const resolvers = {
 						name,
 						email,
 						password: hashedPassword,
+						contact,
+						address,
 					},
 				});
 
 				return { token: getToken(user), user };
 			} catch (e) {
 				e = e.message.replace(/"/g, '');
-				throw new UserInputError('Bad Input', { error: e });
+				throw new UserInputError(e, { error: e });
 			}
 		},
 
-		signIn: async (_, {email, password}) => {
+		signIn: async (_, { email, password }) => {
 			try {
 				const user = await prisma.user.findUnique({
 					where: { email },
@@ -82,9 +97,77 @@ const resolvers = {
 				return { token: getToken(user), user };
 			} catch (e) {
 				e = e.message.replace(/"/g, '');
-				throw new UserInputError('Bad Input', { error: e });
+				throw new UserInputError(e, { error: e });
 			}
-		}
+		},
+
+		updateUser: async (_, { id, email, name, contact, address }) => {
+			try {
+				const { value, error } = userUpdateSchema.validate({
+					name,
+					email,
+					address,
+					contact,
+				});
+
+				if (error) {
+					throw new Error(error.details[0].message);
+				}
+
+				const oldUser = await prisma.user.findUnique({
+					where: { id },
+				});
+
+				if (!oldUser) {
+					throw new Error('User not found');
+				}
+
+				const otherEmailExists = await prisma.user.findMany({
+					where: {
+						email,
+						NOT: { id },
+					},
+				});
+
+				if (otherEmailExists.length > 0) {
+					throw new Error('Email already exists');
+				}
+
+				const updatedUser = await prisma.user.update({
+					where: { id },
+					data: { name, email, contact, address },
+				});
+
+				return updatedUser;
+			} catch (e) {
+				e = e.message.replace(/"/g, '');
+				throw new UserInputError(e, { error: e });
+			}
+		},
+
+		changePassword: async (_, {id, password, newPassword}) => {
+			try {
+				const user = await prisma.user.findUnique({where: {id}});
+				
+				const valid = await bcrypt.compare(password, user.password);
+
+				if (!valid) {
+					throw new Error('Invalid password');
+				}
+
+				const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+				const updatedUser = await prisma.user.update({
+					where: { id },
+					data: { password: hashedPassword },
+				});
+
+				return updatedUser;
+			} catch (e) {
+				e = e.message.replace(/"/g, '');
+				throw new UserInputError(e, { error: e });
+			}
+		},
 	},
 };
 
