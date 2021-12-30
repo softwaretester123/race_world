@@ -1,11 +1,35 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Picker } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-const Finance = ({navigation}) => {
+import finance_list from '../FinanceList';
+
+const Finance = ({ navigation }) => {
+	const [selectedValue, setSelectedValue] = useState('java');
+	const [contact, setContact] = useState('');
+
+	useEffect(() => {}, [contact]);
+
 	return (
 		<View>
 			<Text style={styles.heading}>Finance</Text>
+			<Picker
+				selectedValue={selectedValue}
+				style={{ height: 100, width: 220 }}
+				onValueChange={(itemValue, itemIndex) => {
+					setSelectedValue(itemValue);
+					setContact(itemValue);
+				}}
+			>
+				{finance_list.map((finance, index) => (
+					<Picker.Item
+						key={finance.id}
+						label={finance.name}
+						value={finance.contact}
+					/>
+				))}
+			</Picker>
+			<Text>{contact}</Text>
 		</View>
 	);
 };
@@ -16,23 +40,20 @@ const styles = StyleSheet.create({
 		fontWeight: 'bold',
 		textAlign: 'center',
 	},
-})
+});
 
 const Stack = createNativeStackNavigator();
 
 const FinanceNavigator = () => {
 	return (
-		<Stack.Navigator
-		>
-			<Stack.Screen name='FinanceHome' component={Finance} options={{title: 'Finance'}} />
-			{/* <Stack.Screen
-				name='NewCar'
-				component={NewCar}
-				options={{ title: 'New Car' }}
+		<Stack.Navigator>
+			<Stack.Screen
+				name='FinanceHome'
+				component={Finance}
+				options={{ title: 'Finance' }}
 			/>
-			<Stack.Screen name='UsedCar' component={UsedCar} options={{ title: 'Used Car' }} /> */}
 		</Stack.Navigator>
 	);
-}
+};
 
 export default FinanceNavigator;
